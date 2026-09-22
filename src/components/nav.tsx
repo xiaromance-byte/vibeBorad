@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 
 export function Nav() {
   const { data: session, isPending } = authClient.useSession();
-  const router = useRouter();
 
   return (
     <header className="border-b bg-background">
@@ -27,8 +25,7 @@ export function Nav() {
                 size="sm"
                 onClick={async () => {
                   await authClient.signOut();
-                  router.push("/");
-                  router.refresh();
+                  window.location.href = "/auth/sign-in";
                 }}
               >
                 로그아웃

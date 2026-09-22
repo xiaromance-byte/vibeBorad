@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function VerifyEmailForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 
@@ -35,8 +34,7 @@ function VerifyEmailForm() {
       return;
     }
     if (data && "token" in data && data.token) {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } else {
       setMessage("이메일 인증이 완료되었습니다. 로그인해주세요.");
     }

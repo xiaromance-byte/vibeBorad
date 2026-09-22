@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +30,10 @@ export default function SignInPage() {
       }
       return;
     }
-    router.push("/");
-    router.refresh();
+    // Hard navigation: a client-side push can reuse a Router Cache entry
+    // prefetched for "/" before login (from the Nav link on this page),
+    // which would bounce straight back to the sign-in redirect.
+    window.location.href = "/";
   }
 
   return (
