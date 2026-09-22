@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   addComment,
   deleteComment,
+  getCurrentUser,
   getPost,
   incrementViews,
   listComments,
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { DeletePostButton } from "@/components/delete-post-button";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,11 @@ export default async function PostDetailPage({
   if (!post) notFound();
 
   await incrementViews(postId);
-  const comments = await listComments(postId);
+  const [comments, currentUser] = await Promise.all([
+    listComments(postId),
+    getCurrentUser(),
+  ]);
+  const isOwner = currentUser?.id === post.authorId;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-10">
@@ -55,12 +59,14 @@ export default async function PostDetailPage({
               {post.author} · {formatDate(post.createdAt)} · 조회{" "}
               {post.views + 1}
             </span>
-            <div className="flex gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/posts/${post.id}/edit`}>수정</Link>
-              </Button>
-              <DeletePostButton postId={post.id} />
-            </div>
+            {isOwner && (
+              <div className="flex gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/posts/${post.id}/edit`}>수정</Link>
+                </Button>
+                <DeletePostButton postId={post.id} />
+              </div>
+            )}
           </div>
         </CardHeader>
         <Separator />
@@ -76,18 +82,24 @@ export default async function PostDetailPage({
           </h2>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <form
-            action={addComment.bind(null, post.id)}
-            className="flex flex-col gap-3"
-          >
-            <div className="flex gap-2">
-              <Input name="author" placeholder="이름" className="max-w-40" required />
-            </div>
-            <Textarea name="content" placeholder="댓글을 입력하세요" rows={3} required />
-            <Button type="submit" size="sm" className="w-fit self-end">
-              댓글 등록
-            </Button>
-          </form>
+          {currentUser ? (
+            <form
+              action={addComment.bind(null, post.id)}
+              className="flex flex-col gap-3"
+            >
+              <Textarea name="content" placeholder="댓글을 입력하세요" rows={3} required />
+              <Button type="submit" size="sm" className="w-fit self-end">
+                댓글 등록
+              </Button>
+            </form>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              <Link href="/auth/sign-in" className="font-medium underline">
+                로그인
+              </Link>
+              하면 댓글을 작성할 수 있습니다.
+            </p>
+          )}
 
           {comments.length > 0 && <Separator />}
 
@@ -100,14 +112,16 @@ export default async function PostDetailPage({
                     <span className="text-xs text-muted-foreground">
                       {formatDate(comment.createdAt)}
                     </span>
-                    <form action={deleteComment.bind(null, post.id, comment.id)}>
-                      <button
-                        type="submit"
-                        className="text-xs text-muted-foreground hover:text-destructive"
-                      >
-                        삭제
-                      </button>
-                    </form>
+                    {currentUser?.id === comment.authorId && (
+                      <form action={deleteComment.bind(null, post.id, comment.id)}>
+                        <button
+                          type="submit"
+                          className="text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          삭제
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </div>
                 <p className="whitespace-pre-wrap text-sm">{comment.content}</p>

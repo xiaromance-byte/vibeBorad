@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getPost, updatePost } from "@/app/actions";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentUser, getPost, updatePost } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ export default async function EditPostPage({
   const post = await getPost(postId);
   if (!post) notFound();
 
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/sign-in");
+  if (post.authorId !== user.id) redirect(`/posts/${post.id}`);
+
   const updatePostWithId = updatePost.bind(null, post.id);
 
   return (
@@ -34,10 +38,6 @@ export default async function EditPostPage({
             <div className="flex flex-col gap-2">
               <Label htmlFor="title">제목</Label>
               <Input id="title" name="title" defaultValue={post.title} required />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="author">작성자</Label>
-              <Input id="author" name="author" defaultValue={post.author} required />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="content">내용</Label>
