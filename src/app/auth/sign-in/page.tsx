@@ -16,14 +16,20 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [needsVerification, setNeedsVerification] = useState(false);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
     setLoading(true);
     const { error } = await authClient.signIn.email({ email, password });
     setLoading(false);
     if (error) {
       setError(error.message ?? "로그인에 실패했습니다.");
+      if (error.message?.toLowerCase().includes("verif")) {
+        setNeedsVerification(true);
+      }
       return;
     }
     router.push("/");
@@ -59,6 +65,16 @@ export default function SignInPage() {
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
+            {needsVerification && (
+              <p className="text-sm text-muted-foreground">
+                <Link
+                  href={`/auth/verify-email?email=${encodeURIComponent(email)}`}
+                  className="font-medium text-foreground underline"
+                >
+                  이메일 인증하러 가기
+                </Link>
+              </p>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? "로그인 중..." : "로그인"}
             </Button>

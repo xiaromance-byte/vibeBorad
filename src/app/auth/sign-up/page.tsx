@@ -27,12 +27,18 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
-    const { error } = await authClient.signUp.email({ name, email, password });
+    const { data, error } = await authClient.signUp.email({ name, email, password });
     setLoading(false);
     if (error) {
       setError(error.message ?? "회원가입에 실패했습니다.");
       return;
     }
+
+    if (data?.user && !data.user.emailVerified) {
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      return;
+    }
+
     router.push("/");
     router.refresh();
   }
